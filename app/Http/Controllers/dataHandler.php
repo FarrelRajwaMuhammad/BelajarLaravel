@@ -6,22 +6,28 @@ use App\Models\City;
 use App\Models\Province;
 use Illuminate\Container\Attributes\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class dataHandler extends Controller
 {
     public function importFromJson(Request $request)
     {
-        $regions = $request->json()->all();
+        $url = 'https://raw.githubusercontent.com/mtegarsantosa/json-nama-daerah-indonesia/refs/heads/master/regions.json';
+        $response = Http::get($url);
 
-        $regions = json_decode($request->input('data'), true);
+        if ($response->failed()) {
+            return response()->json(['message' => 'Gagal mengambil data'], 500);
+        }
+
+        $regions = $response->json();
+
+        
 
         foreach ($regions as $region) {
-            // Simpan provinsi
             $province = Province::create([
                 'namaProvinsi' => $region['provinsi']
             ]);
 
-            // Simpan kota-kota dalam provinsi
             foreach ($region['kota'] as $cityName) {
                 City::create([
                     'namaKota' => $cityName,
